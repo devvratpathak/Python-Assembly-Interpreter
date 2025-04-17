@@ -36,20 +36,22 @@ def process_line(line: str):
 
     line = line.strip()
     
-    # Splits commands such that the command and all details are seperated
+    # Splits commands such that the command and all details are separated
     # "command ..." -> [command, ...]
+    if not line:
+        return None  # Return None for empty lines after stripping
+
+    if line[-1] == ':' or line == 'end' or line == 'ret':
+        return (line,)
+
     try:
-        command, contents = line.split(maxsplit = 1)
-    # Deals with function names, two special commands, and empty lines
+        command, contents = line.split(maxsplit=1)
     except ValueError:
-        if line == '':
-            return None
-        elif line[-1] == ':' or line == 'end' or line == 'ret':
-            return (line,)
+        return (line,)  # Handle cases where only the command exists
 
     # Splits depending on command type, some requiring one argument, others two
     try:
-        one, two = contents.split(',')
+        one, two = contents.split(',', maxsplit=1)
         return command, one.strip(), two.strip()
     except ValueError:
         return command, contents.strip()

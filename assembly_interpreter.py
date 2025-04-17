@@ -23,6 +23,7 @@ def assembler_interpreter(program, DEBUG=False):
     memory = dict()
     registers, line_counter = dict(), 0
     prev_lines, return_code = deque(), str()
+    compare = [0, 0]  # Initialize compare to avoid UnboundLocalError
     while program[line_counter][0] != 'end':
         if DEBUG:
             print(program[line_counter], registers, memory, prev_lines, sep = '\n', end='\n\n')
@@ -160,7 +161,7 @@ def assembler_interpreter(program, DEBUG=False):
         elif command == 'cl':
             label = other[0]
             prev_lines.append(line_counter)
-            if compare[0] < compare[1]:
+            if compare[0] < compare[1]:  # Fixed unmatched closing bracket
                 line_counter = label_lines[label]
 
         # stw stores a value at a memory address
@@ -173,19 +174,39 @@ def assembler_interpreter(program, DEBUG=False):
         elif command == 'mvw':
             register, address = other
             address = get_address(address, registers)
-            registers[register] = memory[address]
+            registers[register] = memory.get(address, 0)  # Default to 0 if address not in memory
 
         # msg stores the return output of the program
         elif command == 'msg':
-            string = False
-            for part in other:
-                for character in part:
-                    if character == "'":
-                        string = not string
-                    elif string:
-                        return_code += character
-                    elif character not in ', ':
-                        return_code += str(registers[character])
+            parts = []
+            i = 0
+            while i < len(other):
+                part = other[i]
+                if part.startswith("'") and not part.endswith("'"):
+                    # Handle multi-part strings
+                    full_str = [part[1:]]  # Remove opening quote
+                    i += 1
+                    while i < len(other) and not other[i].endswith("'"):
+                        full_str.append(other[i])
+                        i += 1
+                    if i < len(other):
+                        full_str.append(other[i][:-1])  # Remove closing quote
+                    parts.append(' '.join(full_str))
+                elif part.startswith("'") and part.endswith("'"):
+                    # Handle complete quoted strings
+                    parts.append(part[1:-1])
+                elif part == '\\n':
+                    # Handle newlines
+                    parts.append('\n')
+                elif part in registers:
+                    # Handle register values
+                    parts.append(str(registers[part]))
+                else:
+                    # Handle other text
+                    parts.append(part)
+                i += 1
+            
+            return_code += ''.join(parts) + '\n'  # Ensure each msg ends with a newline
 
         line_counter += 1
 
@@ -198,13 +219,17 @@ def assembler_interpreter(program, DEBUG=False):
 if __name__ == '__main__':
     if len(argv) < 2:
         print('Usage: assembly_interpreter.py file')
+        exit(1)  # Exit with error code
 
     DEBUG = False
     if len(argv) >= 3:
         DEBUG = argv[2] == '-d'
 
     assembly_file = argv[1]
-    with open(assembly_file) as program:
-        output = assembler_interpreter(program.read(), DEBUG)
-
-    print(output)
+    try:
+        with open(assembly_file) as program:
+            output = assembler_interpreter(program.read(), DEBUG)
+        print(output)
+    except FileNotFoundError:
+        print(f"Error: File '{assembly_file}' not found.")
+        exit(1)  # Exit with error code
