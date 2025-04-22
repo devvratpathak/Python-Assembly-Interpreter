@@ -21,8 +21,12 @@ def get_value(value: str, registers: dict):
 
     if value in registers:
         return registers[value]
-
-    return int(value)
+    
+    try:
+        return int(value)
+    except ValueError:
+        # Improved error handling for non-numeric values
+        raise ValueError(f"Invalid value: '{value}' is not a valid integer or register name")
 
 def process_line(line: str):
     """Removes comments and unneeded whitespace. Returns a split list of
@@ -49,7 +53,41 @@ def process_line(line: str):
     except ValueError:
         return (line,)  # Handle cases where only the command exists
 
-    # Splits depending on command type, some requiring one argument, others two
+    # Special handling for msg command to preserve commas in quoted strings
+    if command == 'msg':
+        parts = [command]
+        in_quote = False
+        current_part = ""
+        quote_start = -1
+        
+        for i, char in enumerate(contents):
+            if char == "'" and (i == 0 or contents[i-1] != '\\'):
+                in_quote = not in_quote
+                if in_quote:
+                    # Start of quoted string
+                    quote_start = i
+                    if current_part:
+                        parts.append(current_part.strip())
+                        current_part = ""
+                    current_part = "'"
+                else:
+                    # End of quoted string
+                    current_part += "'"
+                    parts.append(current_part)
+                    current_part = ""
+            elif char == ',' and not in_quote:
+                if current_part:
+                    parts.append(current_part.strip())
+                    current_part = ""
+            else:
+                current_part += char
+        
+        if current_part:
+            parts.append(current_part.strip())
+        
+        return tuple(parts)
+    
+    # For other commands, split by comma
     try:
         one, two = contents.split(',', maxsplit=1)
         return command, one.strip(), two.strip()

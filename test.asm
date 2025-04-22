@@ -1,5 +1,5 @@
 ; =============================================
-; Assembly Program with Clean Output Formatting
+; Simple Assembly Program for Demonstration
 ; =============================================
 
 ; Initialize registers
@@ -10,98 +10,64 @@ mov d, 100
 mov counter, 5
 
 ; Basic arithmetic operations
-add_ops:
-    add a, 5
-    sub b, 3
-    mul c, 4
-    div d, 2
-    inc a
-    dec b
+add a, 5
+sub b, 3
+mul c, 4
+div d, 2
+inc a
+dec b
 
-; Comparison section
-compare_section:
-    cmp a, b
-    je equal
-    msg 'This should not print'
+; Compare values
+cmp a, 16
+je equal_section
+jmp not_equal_section
+
+equal_section:
+    msg 'Values are equal (16 and 16)'
     jmp end_comparison
 
-equal:
-    msg 'Values are equal (16 and 16)', '\n'
+not_equal_section:
+    msg 'Values are not equal'
 
 end_comparison:
-    cmp counter, 0
-    jg loop_section
+    msg 'Comparison complete'
 
-; Loop demonstration with clean output
-loop_section:
+; Loop demonstration
+msg 'Starting loop demonstration'
+loop_start:
     msg 'Counter: ', counter
     dec counter
     cmp counter, 0
-    jg loop_section
-
-msg ''  ; Add extra line break
+    jg loop_start
+    msg 'Loop finished'
 
 ; Function call
-main:
-    mov x, 2
-    mov y, 3
-    call multiply
-    msg 'Result of 2 * 3: ', z, '\n'
-    jmp memory_ops
+mov x, 2
+mov y, 3
+call multiply_function
+msg 'Result of 2 * 3: ', z
+
+; Memory operations
+stw a, 1000
+mvw temp, 1000
+msg 'Memory value: ', temp
+
+; Final output
+msg '=== Program Results ==='
+msg 'Register a: ', a
+msg 'Register b: ', b
+msg 'Register d: ', d
+msg 'Memory temp: ', temp
+msg 'Final counter: ', counter
+msg '========================'
+
+jmp end_of_program
 
 ; Multiply function
-multiply:
+multiply_function:
     mov z, x
     mul z, y
     ret
 
-; Memory operations
-memory_ops:
-    stw a, 1000
-    mvw temp, 1000
-    msg 'Memory value: ', temp, '\n'
-
-; Conditional jumps section
-conditional_demo:
-    mov p, 15
-    mov q, 20
-    
-    cmp p, q
-    jl less
-    jg greater
-    je equal_msg
-    
-less:
-    msg '15 is less than 20'
-    jmp next_condition
-    
-greater:
-    msg 'This should not print'
-    jmp next_condition
-    
-equal_msg:
-    msg 'This should not print'
-
-next_condition:
-    cmp p, q
-    jle less_or_equal
-    jge greater_or_equal
-    
-less_or_equal:
-    msg '15 is less than or equal to 20', '\n'
-    jmp final_output
-    
-greater_or_equal:
-    msg 'This should not print'
-
-; Final output section
-final_output:
-    msg '=== Program Results ==='
-    msg 'Register a: ', a
-    msg 'Register b: ', b
-    msg 'Register d: ', d
-    msg 'Memory temp: ', temp
-    msg 'Final counter: ', counter
-    msg '========================'
-
+end_of_program:
 end
